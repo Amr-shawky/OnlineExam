@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -120,11 +120,17 @@ namespace OnlineExam
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions => { /* unchanged */ });
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
                 options.EnableSensitiveDataLogging(false);
                 options.EnableServiceProviderCaching();
                 options.EnableDetailedErrors(builder.Environment.IsDevelopment());
                 options.LogTo(message => Log.Debug("[EF] {Message}", message), LogLevel.Warning);
+            });
+
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = builder.Configuration.GetValue<string>("RedisCache:Configuration");
+                options.InstanceName = builder.Configuration.GetValue<string>("RedisCache:InstanceName");
             });
 
             builder.Services.AddMemoryCache();
