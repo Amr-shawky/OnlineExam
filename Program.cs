@@ -231,7 +231,8 @@ namespace OnlineExam
             app.MapForgotPasswordEndpoint(); // Map the forgot password endpoint
             app.MapResetPasswordEndpoint(); // Map the reset password endpoint
             app.MapResendVerificationCodeEndpoint(); // Map the resend verification code endpoint
-           //profile endpoints
+            app.MapTestEndpoint();
+            //profile endpoints
             app.MapProfileEndpoint();
             app.MapUpdateProfileEndpoint();
             //category endpoints

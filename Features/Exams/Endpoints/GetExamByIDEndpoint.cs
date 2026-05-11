@@ -23,7 +23,10 @@ namespace OnlineExam.Features.Exams.Endpoints
                 if (!string.IsNullOrEmpty(cachedData))
                 {
                     var cachedResult = JsonSerializer.Deserialize<ServiceResponse<UserExamDetailsDto>>(cachedData);
-                    return Results.Json(cachedResult, statusCode: cachedResult.StatusCode);
+                    if (cachedResult is not null)
+                    {
+                        return Results.Json(cachedResult, statusCode: cachedResult.StatusCode);
+                    }
                 }
 
                 var result = await mediator.Send(new GetExamDetailsQuery(id));
@@ -40,6 +43,7 @@ namespace OnlineExam.Features.Exams.Endpoints
 
                 return Results.Json(result, statusCode: result.StatusCode);
             })
+            .AllowAnonymous()
             .WithName("GetExamDetails")
             .Produces<ServiceResponse<UserExamDetailsDto>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<UserExamDetailsDto>>(StatusCodes.Status404NotFound);

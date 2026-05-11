@@ -9,28 +9,15 @@ namespace OnlineExam.Features.Categories.Handlers
 {
     public class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByIdQuery, ServiceResponse<CategoryDetailsDto>>
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<Category> _categoryRepository;
 
-        public GetCategoryByIdQueryHandler(IGenericRepository<Category> categoryRepository ,
-            IHttpContextAccessor httpContextAccessor
-            )
+        public GetCategoryByIdQueryHandler(IGenericRepository<Category> categoryRepository)
         {
-            _httpContextAccessor = httpContextAccessor;
             _categoryRepository = categoryRepository;
         }
 
         public async Task<ServiceResponse<CategoryDetailsDto>> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
         {
-            // Check if user is authenticated
-            var user = _httpContextAccessor.HttpContext?.User;
-            if (user?.Identity?.IsAuthenticated != true)
-            {
-                return ServiceResponse<CategoryDetailsDto>.UnauthorizedResponse(
-                    "Authentication required",
-                    "مطلوب مصادقة"
-                );
-            }
             try
             {
                 var category = await _categoryRepository.GetByIdAsync(request.Id);

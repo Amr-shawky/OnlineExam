@@ -10,30 +10,18 @@ namespace OnlineExam.Features.Exams.Handlers
     public class GetExamDetailsQueryHandler : IRequestHandler<GetExamDetailsQuery, ServiceResponse<UserExamDetailsDto>>
     {
         private readonly IGenericRepository<Exam> _examRepository;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
 
-        public GetExamDetailsQueryHandler(IGenericRepository<Exam> examRepository, IHttpContextAccessor httpContextAccessor)
+        public GetExamDetailsQueryHandler(IGenericRepository<Exam> examRepository)
         {
 
             _examRepository = examRepository;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ServiceResponse<UserExamDetailsDto>> Handle(GetExamDetailsQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                // Check if user is authenticated
-                var user = _httpContextAccessor.HttpContext?.User;
-                if (user?.Identity?.IsAuthenticated != true)
-                {
-                    return ServiceResponse<UserExamDetailsDto>.UnauthorizedResponse(
-                        "Authentication required",
-                        "مطلوب مصادقة"
-                    );
-                }
-
                 var exam = await _examRepository.GetByIdAsync(request.Id);
                 if (exam == null || exam.IsDeleted || !exam.IsActive)
                 {

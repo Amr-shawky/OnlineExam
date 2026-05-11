@@ -4,35 +4,22 @@ using OnlineExam.Domain.Interfaces;
 using OnlineExam.Features.Exams.Dtos;
 using OnlineExam.Features.Exams.Queries;
 using OnlineExam.Shared.Responses;
-using System.Security.Claims;
 
 namespace OnlineExam.Features.Exams.Handlers
 {
     public class GetUserExamsQueryHandler : IRequestHandler<GetExamsQuery, ServiceResponse<PagedResult<UserExamDto>>>
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<Exam> _examRepository;
 
-        public GetUserExamsQueryHandler(IGenericRepository<Exam> examRepository, IHttpContextAccessor httpContextAccessor)
+        public GetUserExamsQueryHandler(IGenericRepository<Exam> examRepository)
         {
             _examRepository = examRepository;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ServiceResponse<PagedResult<UserExamDto>>> Handle(GetExamsQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                // Check if user is authenticated
-                var user = _httpContextAccessor.HttpContext?.User;
-                if (user?.Identity?.IsAuthenticated != true)
-                {
-                    return ServiceResponse<PagedResult<UserExamDto>>.UnauthorizedResponse(
-                        "Authentication required",
-                        "مطلوب مصادقة"
-                    );
-                }
-
                 var exams = _examRepository.GetAll()
                     .Where(exam => exam.IsActive &&
                            !exam.IsDeleted &&
