@@ -219,7 +219,7 @@ namespace OnlineExam
 
             app.UseMiddleware<FormContentTypeValidationMiddleware>();
             app.UseMiddleware<TransactionMiddleware>();
-            app.UseMiddleware<RateLimitingMiddleware>();
+            //app.UseMiddleware<RateLimitingMiddleware>();
             app.UseMiddleware<ProfilingMiddleware>();
 
             app.MapControllers();

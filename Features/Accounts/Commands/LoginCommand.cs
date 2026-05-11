@@ -119,8 +119,13 @@ namespace OnlineExam.Features.Accounts.Commands
                 return activeRefreshToken;
             }
 
-            var newRefreshToken = GenerateRefreshToken();
             user.RefreshTokens ??= new List<RefreshToken>();
+            var nextRefreshTokenId = user.RefreshTokens.Count == 0
+                ? 1
+                : user.RefreshTokens.Max(t => t.Id) + 1;
+
+            var newRefreshToken = GenerateRefreshToken();
+            newRefreshToken.Id = nextRefreshTokenId;
             user.RefreshTokens.Add(newRefreshToken);
 
             return newRefreshToken;
