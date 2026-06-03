@@ -3,6 +3,7 @@ using OnlineExam.Domain;
 using OnlineExam.Domain.Interfaces;
 using OnlineExam.Features.Categories.Commands;
 using OnlineExam.Features.Categories.Dtos;
+using OnlineExam.Shared.Helpers;
 using OnlineExam.Shared.Responses;
 using System.Security.Claims;
 
@@ -99,45 +100,40 @@ namespace OnlineExam.Features.Categories.Handlers
                 // Update icon only if provided
                 if (iconIsUpdated)
                 {
-                    // Validate file size (e.g., 5MB max)
-                    if (request.UpdateCategoryDTo.Icon.Length > 5 * 1024 * 1024)
+                    if (!FileUploadSecurityHelper.TryValidateImage(
+                            request.UpdateCategoryDTo.Icon!,
+                            5 * 1024 * 1024,
+                            out var fileExtension,
+                            out var validationError))
                     {
                         return ServiceResponse<int>.ErrorResponse(
-                            "Icon file size must be less than 5MB",
-                            "يجب أن يكون حجم ملف الأيقونة أقل من 5 ميجابايت",
+                            validationError,
+                            "ملف الصورة غير صالح",
                             400
                         );
                     }
 
-                    // Validate file extension
-                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".svg" };
-                    var fileExtension = Path.GetExtension(request.UpdateCategoryDTo.Icon.FileName).ToLowerInvariant();
-                    if (!allowedExtensions.Contains(fileExtension))
-                    {
-                        return ServiceResponse<int>.ErrorResponse(
-                            "Only image files are allowed (jpg, jpeg, png, gif, svg)",
-                            "يُسمح فقط بملفات الصور (jpg, jpeg, png, gif, svg)",
-                            400
-                        );
-                    }
-
-                    // Delete old icon file if it exists
-                    if (!string.IsNullOrEmpty(category.IconUrl))
-                    {
-                        var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", category.IconUrl.TrimStart('/'));
-                        if (File.Exists(oldFilePath))
-                        {
-                            File.Delete(oldFilePath);
-                        }
-                    }
-
-                    // Upload new icon file
                     string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
                     if (!Directory.Exists(uploadsFolder))
                         Directory.CreateDirectory(uploadsFolder);
 
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + request.UpdateCategoryDTo.Icon.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    // Delete old icon file if it exists
+                    if (!string.IsNullOrEmpty(category.IconUrl))
+                    {
+                        var oldFileName = Path.GetFileName(category.IconUrl);
+                        if (!string.IsNullOrWhiteSpace(oldFileName))
+                        {
+                            var oldFilePath = FileUploadSecurityHelper.BuildSafePath(uploadsFolder, oldFileName);
+                            if (File.Exists(oldFilePath))
+                            {
+                                File.Delete(oldFilePath);
+                            }
+                        }
+                    }
+
+                    // Upload new icon file
+                    string uniqueFileName = FileUploadSecurityHelper.CreateSafeFileName(fileExtension);
+                    string filePath = FileUploadSecurityHelper.BuildSafePath(uploadsFolder, uniqueFileName);
 
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {

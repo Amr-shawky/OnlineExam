@@ -7,6 +7,7 @@ using OnlineExam.Domain.Entities;
 using OnlineExam.Features.Accounts.Dtos;
 using OnlineExam.Shared.Helpers;
 using OnlineExam.Shared.Responses;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -29,13 +30,21 @@ namespace OnlineExam.Features.Accounts.Commands
 
         public async Task<ServiceResponse<UserDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            if (request.LoginDTO == null || string.IsNullOrEmpty(request.LoginDTO.Email) || string.IsNullOrEmpty(request.LoginDTO.Password))
+            var email = request.LoginDTO?.Email?.Trim();
+            var password = request.LoginDTO?.Password;
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 return ServiceResponse<UserDto>.ErrorResponse("Invalid login request", "طلب تسجيل دخول غير صالح", 400);
             }
 
-            var user = await _userManager.FindByEmailAsync(request.LoginDTO.Email);
-            if (user == null || !await _userManager.CheckPasswordAsync(user, request.LoginDTO.Password))
+            if (!new EmailAddressAttribute().IsValid(email) || password.Length is < 6 or > 100)
+            {
+                return ServiceResponse<UserDto>.ErrorResponse("Invalid login request", "طلب تسجيل دخول غير صالح", 400);
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null || !await _userManager.CheckPasswordAsync(user, password))
             {
                 return ServiceResponse<UserDto>.UnauthorizedResponse();
             }

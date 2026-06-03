@@ -3,6 +3,7 @@ using OnlineExam.Domain;
 using OnlineExam.Domain.Interfaces;
 using OnlineExam.Features.Categories.Commands;
 using OnlineExam.Features.Categories.Dtos;
+using OnlineExam.Shared.Helpers;
 using OnlineExam.Shared.Responses;
 using System.Security.Claims;
 using System.Text;
@@ -78,24 +79,15 @@ namespace OnlineExam.Features.Categories.Handlers
                     );
                 }
 
-                // Validate file size (e.g., 5MB max)
-                if (request.CreateCategoryDTo.Icon.Length > 5 * 1024 * 1024)
+                if (!FileUploadSecurityHelper.TryValidateImage(
+                        request.CreateCategoryDTo.Icon,
+                        5 * 1024 * 1024,
+                        out var fileExtension,
+                        out var validationError))
                 {
                     return ServiceResponse<int>.ErrorResponse(
-                        "Icon file size must be less than 5MB",
-                        "يجب أن يكون حجم ملف الأيقونة أقل من 5 ميجابايت",
-                        400
-                    );
-                }
-
-                // Validate file extension
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".svg" };
-                var fileExtension = Path.GetExtension(request.CreateCategoryDTo.Icon.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(fileExtension))
-                {
-                    return ServiceResponse<int>.ErrorResponse(
-                        "Only image files are allowed (jpg, jpeg, png, gif, svg)",
-                        "يُسمح فقط بملfiles الصور (jpg, jpeg, png, gif, svg)",
+                        validationError,
+                        "ملف الصورة غير صالح",
                         400
                     );
                 }
@@ -114,8 +106,8 @@ namespace OnlineExam.Features.Categories.Handlers
                 if (!Directory.Exists(uploadsFolder))
                     Directory.CreateDirectory(uploadsFolder);
 
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + request.CreateCategoryDTo.Icon.FileName;
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                string uniqueFileName = FileUploadSecurityHelper.CreateSafeFileName(fileExtension);
+                string filePath = FileUploadSecurityHelper.BuildSafePath(uploadsFolder, uniqueFileName);
 
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
